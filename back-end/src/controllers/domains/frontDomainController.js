@@ -57,7 +57,7 @@ exports.domains = async (req, res) => {
       data: domainsWithUser,
     });
   } catch (err) {
-    console.error("Error fetching domains:", err.message);
+    console.error("Error fetching domains:", err);
     res.status(500).send("Server error");
   }
 };
