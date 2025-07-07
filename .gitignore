@@ -137,3 +137,11 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# === Floramarket Frontend (Next.js) ===
+front-end/node_modules/
+front-end/.next/
+front-end/out/
+
+# === Floramarket Backend (Express) ===
+back-end/node_modules/
