@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: boldfont;
+  src: url(./fonts/FiraGO-Bold.otf);
+}
+
+@font-face {
+  font-family: font;
+  src: url(././fonts/FiraGO-Regular.otf);
+}
+
+p,
+a,
+::placeholder,
+ul li,
+button {
+  font-family: font;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: boldfont;
+}
+
+.showScroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track { 
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #51087E; 
+  border-radius: 10px;
+}
+
+@theme {
+  --animate-spin: spin 20s linear infinite;
+  --animate-spin1: spin 18s linear infinite;
+  --animate-spin2: spin 15s linear infinite;
+  --color-myPurple: #51087E;
+  --color-myLightPurple: #51087e89;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+}
+
+.group:hover [data-index="0"] {
+  right: 0px;
+}
+.group:hover [data-index="1"] {
+  right: 60px;
+}
+.group:hover [data-index="2"] {
+  right: 120px;
+}
