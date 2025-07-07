@@ -19,7 +19,7 @@ export default function page() {
     data: [],
     limit: 9,
     totalItems: 0,
-    totalPages: 0,
+    totalPages: 0, 
   });
   const [domainsRender, setDomainsRender] = useState<number>(1);
 
