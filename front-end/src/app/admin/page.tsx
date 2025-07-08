@@ -76,7 +76,6 @@ export default function page() {
       .then((res) => {
         HandleAdminToken(res.data.admin_token);
 
-        router.push("/admin/panel");
         toast.success("You Logged in successfully!", {
           autoClose: 3000,
         });
