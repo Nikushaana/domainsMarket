@@ -8,8 +8,8 @@ const VideoDir = path.join(__dirname, "..", "..", "uploads", "videos");
 fs.mkdirSync(ImageDir, { recursive: true });
 fs.mkdirSync(VideoDir, { recursive: true });
 
-const MAX_IMAGE_SIZE = 10 * 1024;
-const MAX_VIDEO_SIZE = 3 * 1024 * 1024;
+const MAX_FILE_SIZE = 3 * 1024 * 1024;
+// const MAX_FILE_SIZE = 10 * 1024;
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -24,10 +24,6 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/") && file.size > MAX_IMAGE_SIZE) {
-    return cb(new Error("Image size should not exceed 100 KB"), false);
-  }
-
   if (file.mimetype.startsWith("video/") && file.size > MAX_VIDEO_SIZE) {
     return cb(new Error("Video size should not exceed 3 MB"), false);
   }
@@ -42,7 +38,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 const limits = {
-  fileSize: MAX_VIDEO_SIZE,
+  fileSize: MAX_FILE_SIZE,
 };
 
 module.exports = {
