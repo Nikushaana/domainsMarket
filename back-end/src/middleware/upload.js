@@ -8,6 +8,9 @@ const VideoDir = path.join(__dirname, "..", "..", "uploads", "videos");
 fs.mkdirSync(ImageDir, { recursive: true });
 fs.mkdirSync(VideoDir, { recursive: true });
 
+const MAX_IMAGE_SIZE = 100 * 1024;
+const MAX_VIDEO_SIZE = 3 * 1024 * 1024;
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) cb(null, ImageDir);
@@ -21,6 +24,13 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/") && file.size > MAX_IMAGE_SIZE) {
+    return cb(new Error("Image size should not exceed 100 KB"), false);
+  }
+
+  if (file.mimetype.startsWith("video/") && file.size > MAX_VIDEO_SIZE) {
+    return cb(new Error("Video size should not exceed 3 MB"), false);
+  }
   if (
     file.mimetype.startsWith("image/") ||
     file.mimetype.startsWith("video/")
@@ -31,20 +41,32 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+const limits = {
+  fileSize: MAX_VIDEO_SIZE,
+};
+
 module.exports = {
-  uploadSingleImage: multer({ storage, fileFilter }).single("image"),
-  uploadMultipleImage: multer({ storage, fileFilter }).array("images", 3),
+  uploadSingleImage: multer({ storage, fileFilter, limits }).single("image"),
+  uploadMultipleImage: multer({ storage, fileFilter, limits }).array(
+    "images",
+    3
+  ),
 
-  uploadSingleVideo: multer({ storage, fileFilter }).single("video"),
-  uploadMultipleVideo: multer({ storage, fileFilter }).array("videos", 2),
+  uploadSingleVideo: multer({ storage, fileFilter, limits }).single("video"),
+  uploadMultipleVideo: multer({ storage, fileFilter, limits }).array(
+    "videos",
+    2
+  ),
 
-  uploadSingleImageAndVideo: multer({ storage, fileFilter }).fields([
+  uploadSingleImageAndVideo: multer({ storage, fileFilter, limits }).fields([
     { name: "image", maxCount: 1 },
     { name: "video", maxCount: 1 },
   ]),
 
-  uploadMultipleImagesAndVideos: multer({ storage, fileFilter }).fields([
-    { name: "images", maxCount: 3 },
-    { name: "videos", maxCount: 2 },
-  ]),
+  uploadMultipleImagesAndVideos: multer({ storage, fileFilter, limits }).fields(
+    [
+      { name: "images", maxCount: 3 },
+      { name: "videos", maxCount: 2 },
+    ]
+  ),
 };
