@@ -43,7 +43,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 const limits = {
-  fileSize: MAX_VIDEO_SIZE,
+  fileSize: MAX_IMAGE_SIZE,
 };
 
 module.exports = {
