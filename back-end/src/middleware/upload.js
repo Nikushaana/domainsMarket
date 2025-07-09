@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.size > MAX_VIDEO_SIZE) {
+  if (file.size > MAX_FILE_SIZE) {
     return cb(new Error("File size should not exceed 3 MB"), false);
   }
   if (
