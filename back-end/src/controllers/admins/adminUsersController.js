@@ -302,6 +302,10 @@ exports.oneUserDelete = async (req, res) => {
     await pool.query("UPDATE domains SET user_id = null WHERE user_id = $1", [
       id,
     ]);
+    await pool.query(
+      `DELETE FROM notifications WHERE type LIKE 'user:%' AND "user_id" = $1`,
+      [id]
+    );
     await pool.query("DELETE FROM user_tokens WHERE user_id = $1", [id]);
     await pool.query("DELETE FROM users WHERE id = $1", [id]);
 
