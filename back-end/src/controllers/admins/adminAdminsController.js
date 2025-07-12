@@ -78,6 +78,7 @@ exports.oneAdminDelete = async (req, res) => {
       return res.status(404).send("The admin with the given ID was not found!");
     }
 
+    await pool.query("DELETE FROM notifications WHERE type LIKE 'admin:%'");
     await pool.query("DELETE FROM admin_tokens WHERE admin_id = $1", [id]);
     await pool.query("DELETE FROM admins WHERE id = $1", [id]);
 
