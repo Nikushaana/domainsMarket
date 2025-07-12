@@ -1,7 +1,13 @@
 const { validateDomain } = require("../../validation/validateDomain");
 const pool = require("../../database/db");
-const fs = require("fs");
 const sendNotification = require("../../utils/sendNotification");
+
+const {
+  cloudinary,
+  MAX_IMAGE_SIZE,
+  MAX_VIDEO_SIZE,
+  extractCloudinaryPublicId,
+} = require("../../utils/cloudinary");
 
 exports.domains = async (req, res) => {
   const { status } = req.query;
@@ -121,56 +127,100 @@ exports.oneDomainUpdate = async (req, res) => {
 
     const { name, description, status, deleteImage, deleteVideo } = req.body;
 
-    // image
-    let imagePath = "";
+    // image video update
+    const oldImageUrl = existing.rows[0].image;
+    const oldVideoUrl = existing.rows[0].video;
+    let imagePath = oldImageUrl;
+    let videoPath = oldVideoUrl;
 
-    if (deleteImage == "true") {
-      fs.unlink(existing.rows[0].image, (err) => {
-        if (err) console.error("Error deleting image:", err.message);
-        else console.log("Image deleted successfully.");
-      });
-    }
+    if (req.files?.image?.[0]?.path || deleteImage == "true") {
+      const publicId = extractCloudinaryPublicId(oldImageUrl);
 
-    if (req.files.image) {
-      if (existing.rows[0].image) {
-        fs.unlink(existing.rows[0].image, (err) => {
-          if (err) console.error("Error deleting image:", err.message);
-          else console.log("Image deleted successfully.");
-        });
+      if (publicId) {
+        try {
+          await cloudinary.uploader.destroy(publicId, {
+            resource_type: "image",
+          });
+          console.error("Cloudinary image deleted");
+          imagePath = "";
+        } catch (err) {
+          console.error("Cloudinary image delete failed:", err);
+        }
       }
-      imagePath = `uploads/images/${req.files.image[0].filename}`;
-    } else if (deleteImage == "true") {
-      imagePath = "";
-    } else if (existing.rows[0].image) {
-      imagePath = existing.rows[0].image;
-    }
-    // image
 
-    // video
-    let videoPath = "";
+      if (req.files?.image?.[0]?.path) {
+        if (req.files?.image?.[0].size < MAX_IMAGE_SIZE * 1024 * 1024) {
+          imagePath = req.files?.image?.[0]?.path;
+        } else {
+          const publicId = extractCloudinaryPublicId(
+            req.files?.image?.[0]?.path
+          );
 
-    if (deleteVideo == "true") {
-      fs.unlink(existing.rows[0].video, (err) => {
-        if (err) console.error("Error deleting video:", err.message);
-        else console.log("Video deleted successfully.");
-      });
-    }
-
-    if (req.files.video) {
-      if (existing.rows[0].video) {
-        fs.unlink(existing.rows[0].video, (err) => {
-          if (err) console.error("Error deleting video:", err.message);
-          else console.log("Video deleted successfully.");
-        });
+          if (publicId) {
+            try {
+              await cloudinary.uploader.destroy(publicId, {
+                resource_type: "image",
+              });
+              console.error("Cloudinary image deleted because size");
+            } catch (err) {
+              console.error(
+                "Cloudinary image delete because size failed:",
+                err
+              );
+            }
+          }
+          return res
+            .status(400)
+            .send(`Image must be under ${MAX_IMAGE_SIZE}MB`);
+        }
       }
-      videoPath = `uploads/videos/${req.files.video[0].filename}`;
-    } else if (deleteVideo == "true") {
-      videoPath = "";
-    } else if (existing.rows[0].video) {
-      videoPath = existing.rows[0].video;
     }
-    // video
 
+    if (req.files?.video?.[0]?.path || deleteVideo == "true") {
+      const publicId = extractCloudinaryPublicId(oldVideoUrl);
+
+      if (publicId) {
+        try {
+          await cloudinary.uploader.destroy(publicId, {
+            resource_type: "video",
+          });
+          console.error("Cloudinary video deleted");
+          videoPath = "";
+        } catch (err) {
+          console.error("Cloudinary video delete failed:", err);
+        }
+      }
+
+      if (req.files?.video?.[0]?.path) {
+        if (req.files?.video?.[0].size < MAX_VIDEO_SIZE * 1024 * 1024) {
+          videoPath = req.files?.video?.[0]?.path;
+        } else {
+          const publicId = extractCloudinaryPublicId(
+            req.files?.image?.[0]?.path
+          );
+
+          if (publicId) {
+            try {
+              await cloudinary.uploader.destroy(publicId, {
+                resource_type: "video",
+              });
+              console.error("Cloudinary video deleted because size");
+              imagePath = "";
+            } catch (err) {
+              console.error(
+                "Cloudinary video delete because size failed:",
+                err
+              );
+            }
+          }
+          return res
+            .status(400)
+            .send(`Video must be under ${MAX_VIDEO_SIZE}MB`);
+        }
+      }
+    }
+
+    // save
     const result = await pool.query(
       "UPDATE domains SET name = $1, description = $2, status = $3, image = $4, video = $5, updated_at = NOW() WHERE id = $6 RETURNING *",
       [name, description, status, imagePath, videoPath, id]
@@ -240,11 +290,38 @@ exports.oneDomainDelete = async (req, res) => {
         .send("The domain with the given ID was not found!");
     }
 
-    if (result.rows[0].image) {
-      fs.unlink(result.rows[0].image, (err) => {
-        if (err) console.error("Failed to delete image:", err.message);
-        else console.log("Image Deleted successfully");
-      });
+    const domain = result.rows[0];
+
+    // image delete
+    if (domain.image) {
+      const publicId = extractCloudinaryPublicId(domain.image);
+
+      if (publicId) {
+        try {
+          await cloudinary.uploader.destroy(publicId, {
+            resource_type: "image",
+          });
+          console.error("Cloudinary image deleted");
+        } catch (err) {
+          console.error("Cloudinary image delete failed:", err);
+        }
+      }
+    }
+
+    // video delete
+    if (domain.video) {
+      const publicId = extractCloudinaryPublicId(domain.video);
+
+      if (publicId) {
+        try {
+          await cloudinary.uploader.destroy(publicId, {
+            resource_type: "video",
+          });
+          console.error("Cloudinary video deleted");
+        } catch (err) {
+          console.error("Cloudinary video delete failed:", err);
+        }
+      }
     }
 
     await pool.query("DELETE FROM domains WHERE id = $1", [id]);

@@ -1,6 +1,5 @@
 const cors = require("cors");
 const express = require("express");
-const path = require("path");
 const pool = require("./database/db");
 
 const http = require("http");
@@ -75,15 +74,15 @@ app.use(
   })
 );
 
-app.use(express.json());   
-
-app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+app.use(express.json());
 
 app.use(allRouter);
 
 app.get("/", (req, res) => {
   res.send("Hello world!!!");
 });
+
+console.log(`Running in ${process.env.NODE_ENV} mode`);
 
 // PORT
 

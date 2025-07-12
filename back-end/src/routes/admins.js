@@ -1,5 +1,4 @@
 const express = require("express");
-const multer = require("multer");
 
 const adminAuthMiddleware = require("../middleware/adminAuthMiddleware");
 const adminAuth = require("../controllers/admins/adminAuthController");
@@ -9,7 +8,7 @@ const adminDomains = require("../controllers/admins/adminDomainsController");
 const adminUsers = require("../controllers/admins/adminUsersController");
 const adminAdmins = require("../controllers/admins/adminAdminsController");
 const {
-  uploadSingleImageAndVideo,
+  uploadImageAndVideo,
   uploadMultipleImagesAndVideos,
 } = require("../middleware/upload");
 
@@ -62,7 +61,7 @@ router.get("/admin/domains/:id", adminAuthMiddleware, adminDomains.oneDomain);
 router.put(
   "/admin/domains/:id",
   adminAuthMiddleware,
-  uploadSingleImageAndVideo,
+  uploadImageAndVideo,
   adminDomains.oneDomainUpdate
 );
 router.delete(
@@ -78,25 +77,7 @@ router.get("/admin/users/:id", adminAuthMiddleware, adminUsers.oneUser);
 router.put(
   "/admin/users/:id",
   adminAuthMiddleware,
-  (req, res, next) => {
-    uploadMultipleImagesAndVideos(req, res, (err) => {
-      if (err instanceof multer.MulterError) {
-        if (err.code === "LIMIT_UNEXPECTED_FILE") {
-          if (err.field === "images") {
-            return res.status(400).json({ message: "Pick just 3 images max." });
-          }
-          if (err.field === "videos") {
-            return res.status(400).json({ message: "Pick just 2 videos max." });
-          }
-          return res.status(400).json({ message: err.message });
-        }
-        return res.status(400).json({ message: err.message });
-      } else if (err) {
-        return res.status(500).json({ message: "Server error" });
-      }
-      next();
-    });
-  },
+  uploadMultipleImagesAndVideos,
   adminUsers.oneUserUpdate
 );
 router.delete(

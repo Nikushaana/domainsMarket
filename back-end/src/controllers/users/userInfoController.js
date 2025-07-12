@@ -1,7 +1,13 @@
 const bcrypt = require("bcrypt");
 const pool = require("../../database/db");
 const { validateUserUpdate } = require("../../validation/validateUserUpdate");
-const fs = require("fs");
+
+const {
+  cloudinary,
+  MAX_IMAGE_SIZE,
+  MAX_VIDEO_SIZE,
+  extractCloudinaryPublicId,
+} = require("../../utils/cloudinary");
 
 exports.user = async (req, res) => {
   try {
@@ -24,108 +30,195 @@ exports.userUpdate = async (req, res) => {
       return res.status(400).send(messages);
     }
 
-    const existing = await pool.query("SELECT * FROM users WHERE id = $1", [
-      req.userId,
-    ]);
+    const existingResult = await pool.query(
+      "SELECT * FROM users WHERE id = $1",
+      [req.userId]
+    );
 
-    if (existing.rows.length === 0) {
+    if (existingResult.rows.length === 0) {
       return res.status(404).send("The user with the given ID was not found!");
     }
 
-    let hashedPassword = existing.rows[0].password;
+    const existing = existingResult.rows[0];
+
+    let hashedPassword = existing.password;
 
     if (password && password.trim() !== "") {
       hashedPassword = await bcrypt.hash(password, 10);
     }
 
-    // images
-    let imagesPaths = existing.rows[0].images || [];
-
+    // images videos update
+    let imagesPaths = existing.images || [];
+    let videosPaths = existing.videos || [];
     let deletedImagesArray = [];
-
-    if (typeof deletedImages === "string") {
-      try {
-        deletedImagesArray = JSON.parse(deletedImages);
-      } catch (e) {
-        return res.status(400).send("Invalid deletedImages JSON format");
-      }
-    } else if (Array.isArray(deletedImages)) {
-      deletedImagesArray = deletedImages;
-    } else {
-      deletedImagesArray = [];
-    }
-
-    if (deletedImagesArray.length > 0) {
-      imagesPaths = imagesPaths.filter(
-        (img) => !deletedImagesArray.includes(img)
-      );
-      deletedImagesArray.forEach((imgPath) => {
-        fs.unlink(imgPath, (err) => {
-          if (err) console.error("Error deleting images:", err.message);
-          else console.log("Images deleted successfully.");
-        });
-      });
-    }
-
-    if (req.files.images && imagesPaths.length + req.files.images.length > 3) {
-      return res.status(400).send({ message: "Pick just 3 images max." });
-    }
-
-    if (req.files.images && req.files.images.length > 0) {
-      const newImagePaths = req.files.images.map(
-        (file) => `uploads/images/${file.filename}`
-      );
-      imagesPaths = [...imagesPaths, ...newImagePaths];
-    }
-    // images
-
-    // videos
-    let videosPaths = existing.rows[0].videos || [];
-
     let deletedVideosArray = [];
 
-    if (typeof deletedVideos === "string") {
-      try {
-        deletedVideosArray = JSON.parse(deletedVideos);
-      } catch (e) {
-        return res.status(400).send("Invalid deletedVideos JSON format");
-      }
-    } else if (Array.isArray(deletedVideos)) {
-      deletedVideosArray = deletedVideos;
-    } else {
-      deletedVideosArray = [];
+    // Parse deleted images/videos lists
+    if (deletedImages) {
+      deletedImagesArray =
+        typeof deletedImages === "string" && deletedImages.trim() !== ""
+          ? JSON.parse(deletedImages)
+          : Array.isArray(deletedImages)
+          ? deletedImages
+          : [];
     }
 
-    if (deletedVideosArray.length > 0) {
-      videosPaths = videosPaths.filter(
-        (vid) => !deletedVideosArray.includes(vid)
-      );
-      deletedVideosArray.forEach((imgPath) => {
-        fs.unlink(imgPath, (err) => {
-          if (err) console.error("Error deleting videos:", err.message);
-          else console.log("Videos deleted successfully.");
-        });
+    if (deletedVideos) {
+      deletedVideosArray =
+        typeof deletedVideos === "string" && deletedVideos.trim() !== ""
+          ? JSON.parse(deletedVideos)
+          : Array.isArray(deletedVideos)
+          ? deletedVideos
+          : [];
+    }
+
+    // images/videos delete
+    for (const url of deletedImagesArray) {
+      const publicId = extractCloudinaryPublicId(url);
+
+      if (publicId) {
+        try {
+          await cloudinary.uploader.destroy(publicId, {
+            resource_type: "image",
+          });
+          imagesPaths = imagesPaths.filter((img) => img !== url);
+          console.error("Cloudinary image deleted");
+        } catch (err) {
+          console.error("Cloudinary image delete failed:", err);
+        }
+      }
+    }
+
+    for (const url of deletedVideosArray) {
+      const publicId = extractCloudinaryPublicId(url);
+
+      if (publicId) {
+        try {
+          await cloudinary.uploader.destroy(publicId, {
+            resource_type: "video",
+          });
+          videosPaths = videosPaths.filter((vid) => vid !== url);
+          console.error("Cloudinary video deleted");
+        } catch (err) {
+          console.error("Cloudinary video delete failed:", err);
+        }
+      }
+    }
+
+    // images/videos update
+
+    if (req.files?.images?.length > 0) {
+      const newImagePaths = req.files.images.map((file) => file.path);
+      if (
+        req.files?.images?.find(
+          (img) => img.size > MAX_IMAGE_SIZE * 1024 * 1024
+        )
+      ) {
+        for (const file of req.files.images) {
+          const publicId = extractCloudinaryPublicId(file.path);
+
+          if (publicId) {
+            try {
+              await cloudinary.uploader.destroy(publicId, {
+                resource_type: "image",
+              });
+              console.error("Cloudinary images deleted because size");
+            } catch (err) {
+              console.error(
+                "Cloudinary images deleted because size failed:",
+                err
+              );
+            }
+          }
+          return res
+            .status(400)
+            .send(`Images must be under ${MAX_IMAGE_SIZE}MB`);
+        }
+      } else {
+        imagesPaths = [...imagesPaths, ...newImagePaths];
+      }
+    }
+
+    if (imagesPaths?.length > 3) {
+      if (req.files?.images?.length > 0) {
+        for (const file of req.files.images) {
+          const publicId = extractCloudinaryPublicId(file.path);
+          if (publicId) {
+            try {
+              await cloudinary.uploader.destroy(publicId, {
+                resource_type: "image",
+              });
+              console.log(`Deleted excess image: ${publicId}`);
+            } catch (err) {
+              console.error("Failed to delete excess image:", err);
+            }
+          }
+        }
+      }
+      return res.status(400).json({
+        error: "Pick just 3 images max.",
       });
     }
 
-    if (req.files.videos && videosPaths.length + req.files.videos.length > 2) {
-      return res.status(400).send({ message: "Pick just 2 videos max." });
+    if (req.files?.videos?.length > 0) {
+      const newVideoPaths = req.files.videos.map((file) => file.path);
+      if (
+        req.files?.videos?.find(
+          (vid) => vid.size > MAX_VIDEO_SIZE * 1024 * 1024
+        )
+      ) {
+        for (const file of req.files.videos) {
+          const publicId = extractCloudinaryPublicId(file.path);
+
+          if (publicId) {
+            try {
+              await cloudinary.uploader.destroy(publicId, {
+                resource_type: "video",
+              });
+              console.error("Cloudinary videos deleted because size");
+            } catch (err) {
+              console.error(
+                "Cloudinary videos deleted because size failed:",
+                err
+              );
+            }
+          }
+          return res
+            .status(400)
+            .send(`Videos must be under ${MAX_VIDEO_SIZE}MB`);
+        }
+      } else {
+        videosPaths = [...videosPaths, ...newVideoPaths];
+      }
     }
 
-    if (req.files.videos && req.files.videos.length > 0) {
-      const newVideoPaths = req.files.videos.map(
-        (file) => `uploads/videos/${file.filename}`
-      );
-      videosPaths = [...videosPaths, ...newVideoPaths];
+    if (videosPaths?.length > 2) {
+      if (req.files?.videos?.length > 0) {
+        for (const file of req.files.videos) {
+          const publicId = extractCloudinaryPublicId(file.path);
+          if (publicId) {
+            try {
+              await cloudinary.uploader.destroy(publicId, {
+                resource_type: "video",
+              });
+              console.log(`Deleted excess video: ${publicId}`);
+            } catch (err) {
+              console.error("Failed to delete excess video:", err);
+            }
+          }
+        }
+      }
+      return res.status(400).json({
+        error: "Pick just 2 videos max.",
+      });
     }
-    // videos
 
     const newUser = await pool.query(
       "UPDATE users SET images = $1, videos = $2, email = $3, password = $4, updated_at = NOW() WHERE id = $5 RETURNING *",
       [imagesPaths, videosPaths, email, hashedPassword, req.userId]
     );
 
-    res.status(201).send({
+    res.status(200).send({
       message: "user updated successfully",
       user: newUser.rows[0],
     });

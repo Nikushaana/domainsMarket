@@ -6,11 +6,13 @@ exports.validateUserUpdate = function (user) {
       .email({ tlds: { allow: false } })
       .required(),
     password: Joi.string().min(6).optional().allow(""),
+    images: Joi.optional(),
+    videos: Joi.optional(),
     deletedImages: Joi.alternatives()
-      .try(Joi.string(), Joi.array().items(Joi.string()))
+      .try(Joi.string().allow(""), Joi.array().items(Joi.string()))
       .optional(),
     deletedVideos: Joi.alternatives()
-      .try(Joi.string(), Joi.array().items(Joi.string()))
+      .try(Joi.string().allow(""), Joi.array().items(Joi.string()))
       .optional(),
   });
 
