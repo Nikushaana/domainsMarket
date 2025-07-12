@@ -88,29 +88,7 @@ exports.userNotifications = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-exports.allNotifications = async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT * FROM notifications ORDER BY read ASC, created_at DESC`
-    );
 
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-exports.allDeNotifications = async (req, res) => {
-  try {
-    await pool.query(`DELETE FROM notifications`);
-
-    res.status(200).send({
-      message: `all notifications deleted successfully`,
-    });
-  } catch (err) {
-    console.error(`Error deleting user ${userId} notifications`, err.message);
-    res.status(500).send("Server error");
-  }
-};
 exports.deleteOneUserNotifications = async (req, res) => {
   const userId = req.userId;
   try {

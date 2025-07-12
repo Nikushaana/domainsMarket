@@ -22,8 +22,6 @@ router.get(
   userAuthMiddleware,
   adminAndUserNotifications.userNotifications
 );
-router.get("/allnotifications", adminAndUserNotifications.allNotifications);
-router.delete("/allnotifications", adminAndUserNotifications.allDeNotifications);
 router.delete(
   "/user/notifications",
   userAuthMiddleware,
