@@ -46,6 +46,7 @@ export default function page() {
 
   const domainSchema = Yup.string()
     .required("Domain is required")
+    .max(20)
     .matches(
       /^(?!:\/\/)([a-zA-Z0-9-_]+\.)+[a-zA-Z]{2,}$/,
       "Please enter a valid domain name (e.g. example.com)"
