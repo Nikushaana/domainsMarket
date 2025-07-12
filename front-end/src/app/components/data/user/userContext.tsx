@@ -66,8 +66,8 @@ const UserContext = ({ children }: Props) => {
               router.push("/auth/login");
             }
             if (
-              error.response.data.error == "Invalid token" ||
-              error.response.data.error == "Token is expired or logged out"
+              error.response.data?.error == "Invalid token" ||
+              error.response.data?.error == "Token is expired or logged out"
             ) {
               localStorage.removeItem("fullstack-user-token");
             }

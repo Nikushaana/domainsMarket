@@ -19,7 +19,7 @@ export default function page() {
     data: [],
     limit: 9,
     totalItems: 0,
-    totalPages: 0, 
+    totalPages: 0,
   });
   const [domainsRender, setDomainsRender] = useState<number>(1);
 
@@ -46,8 +46,10 @@ export default function page() {
 
   const domainSchema = Yup.string()
     .required("Domain is required")
-    .matches(/^[^www.]/, "Domain should not start with 'www.'")
-    .matches(/\./, "Domain must include a '.' character");
+    .matches(
+      /^(?!:\/\/)([a-zA-Z0-9-_]+\.)+[a-zA-Z]{2,}$/,
+      "Please enter a valid domain name (e.g. example.com)"
+    );
 
   const handleAddDomain = () => {
     setAddDomainLoader(true);
