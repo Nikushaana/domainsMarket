@@ -14,6 +14,7 @@ exports.user = async (req, res) => {
     const user = await pool.query("SELECT * FROM users WHERE id = $1", [
       req.userId,
     ]);
+
     res.json(user.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -203,7 +204,10 @@ exports.userUpdate = async (req, res) => {
               });
               console.log(`Deleted excess video: ${publicId}`);
             } catch (err) {
-              console.error("Failed to delete excess video:", err);
+              console.error(
+                "Failed to delete excess video:",
+                JSON.stringify(err)
+              );
             }
           }
         }

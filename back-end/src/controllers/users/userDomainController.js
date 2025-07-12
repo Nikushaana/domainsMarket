@@ -9,6 +9,7 @@ const {
   extractCloudinaryPublicId,
 } = require("../../utils/cloudinary");
 
+
 exports.domains = async (req, res) => {
   const { status } = req.query;
 
