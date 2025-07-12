@@ -267,7 +267,7 @@ export default function page({
             </h1>
             <video
               controls
-              src={process.env.NEXT_PUBLIC_API_URL + "/" + vid}
+              src={vid}
               className="w-full h-full object-cover"
             />
           </div>

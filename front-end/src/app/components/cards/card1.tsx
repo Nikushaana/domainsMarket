@@ -319,7 +319,7 @@ export default function Card1({ item, role, setRenderDomains }: Card1Props) {
                   controls={role ? false : true}
                   src={
                     typeof domainValues.video === "string"
-                      ? `${process.env.NEXT_PUBLIC_API_URL}/${domainValues.video}`
+                      ? domainValues.video
                       : URL.createObjectURL(domainValues.video)
                   }
                   className="w-full h-full object-cover"
