@@ -14,7 +14,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["https://domains-market.vercel.app"],
+    origin: ["https://domains-market.vercel.app", "http://localhost:3000"],
     methods: ["GET", "POST"],
   },
 });
@@ -70,7 +70,8 @@ io.on("connection", (socket) => {
 
 app.use(
   cors({
-    origin: "https://domains-market.vercel.app",
+    origin: ["https://domains-market.vercel.app", "http://localhost:3000"],
+    credentials: true,
   })
 );
 
