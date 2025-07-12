@@ -46,7 +46,7 @@ export default function Header() {
                         className={`w-full h-full rounded-full overflow-hidden absolute duration-500 top-[50%] translate-y-[-50%] right-0 shadow-md shadow-myLightPurple border-[1px] border-myPurple group-hover:rotate-[-360deg]`}
                       >
                         <img
-                          src={process.env.NEXT_PUBLIC_API_URL + "/" + img}
+                          src={img}
                           alt="user"
                           className="w-full h-full object-cover"
                         />

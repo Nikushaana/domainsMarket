@@ -251,9 +251,7 @@ export default function Card1({ item, role, setRenderDomains }: Card1Props) {
                 <img
                   src={
                     typeof domainValues.image === "string"
-                      ? process.env.NEXT_PUBLIC_API_URL +
-                        "/" +
-                        domainValues.image
+                      ? domainValues.image
                       : URL.createObjectURL(domainValues.image)
                   }
                   alt="domain"
@@ -450,7 +448,7 @@ export default function Card1({ item, role, setRenderDomains }: Card1Props) {
                     className={`w-[30px] h-[30px] shrink-0 rounded-full overflow-hidden`}
                   >
                     <img
-                      src={process.env.NEXT_PUBLIC_API_URL + "/" + img}
+                      src={img}
                       alt="user"
                       className="w-full h-full object-cover"
                     />

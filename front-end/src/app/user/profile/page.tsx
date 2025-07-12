@@ -183,7 +183,7 @@ export default function page() {
               Delete Image
             </h1>
             <img
-              src={process.env.NEXT_PUBLIC_API_URL + "/" + img}
+              src={img}
               alt="domain"
               className="w-full h-full object-cover"
             />

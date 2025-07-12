@@ -94,7 +94,7 @@ export default function Card2({ item, role, setRender, online }: Card2Props) {
                   className="w-[40px] h-[40px] rounded-full overflow-hidden"
                 >
                   <img
-                    src={process.env.NEXT_PUBLIC_API_URL + "/" + img}
+                    src={img}
                     alt="user"
                     className="w-full h-full object-cover"
                   />
